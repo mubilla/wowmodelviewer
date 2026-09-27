@@ -1634,8 +1634,9 @@ void ModelViewer::ApplyViewerStartupLayout()
   // do next itself (the Unity viewport's notice), so hiding the panels that do it is no longer the
   // way to make an empty application look tidy.
 
-  // Take the screen. A viewer that opens in a small window in the corner is not one.
-  EnterViewerFullScreen(true);
+  // Use the available desktop area while keeping the taskbar visible.
+  // Borderless fullscreen remains available through F11.
+  Maximize(true);
 }
 
 // Start the player, at launch, before any client is loaded.
