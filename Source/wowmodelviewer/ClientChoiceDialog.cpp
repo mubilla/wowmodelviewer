@@ -16,6 +16,7 @@
 #include <QTextStream>
 #include <QStringList>
 #include <QRegularExpression>
+#include <QVersionNumber>
 
 #include "enums.h"
 #include "util.h"             // gamePath
@@ -34,12 +35,14 @@ ClientChoiceDialog::ClientChoiceDialog(wxWindow * parent)
 {
   const wxString initialRoot = rootOf(gamePath);
   buildUI(initialRoot);
-  populateProfiles();
-
   if (!initialRoot.IsEmpty() && wxDirExists(initialRoot))
     detect(initialRoot);
   else
     m_detected->SetLabel(wxT("(choose your World of Warcraft folder)"));
+
+  // Always open on the newest available profile, independently of directory order
+  // or an installed patch version without an exact profile match (e.g. 12.1 vs 12.0).
+  populateProfiles();
 
   GetSizer()->Fit(this);
   Centre();
@@ -216,7 +219,12 @@ void ClientChoiceDialog::populateProfiles()
     m_profile->Append(wxT("(auto-detect)"));
     m_profileDirs.push_back(QString());
   }
-  m_profile->SetSelection(0);
+  size_t newest = 0;
+  for (size_t i = 1; i < m_profileDirs.size(); ++i)
+    if (QVersionNumber::compare(QVersionNumber::fromString(m_profileDirs[i]),
+                               QVersionNumber::fromString(m_profileDirs[newest])) > 0)
+      newest = i;
+  m_profile->SetSelection((int)newest);
 }
 
 void ClientChoiceDialog::selectProfileForVersion(const QString & version)
