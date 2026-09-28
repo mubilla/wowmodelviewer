@@ -7,10 +7,12 @@ project(WoWModelViewer)
 # both stay buildable from the same tree.
 if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
   set(WMV_X64 ON)
-  set(WMV_VCPKG_X64 "C:/Users/Rasmus Lund/vcpkg/installed/x64-windows")
+  set(WMV_VCPKG_X64 "C:/Users/Rasmus Lund/vcpkg/installed/x64-windows"
+      CACHE PATH "Directory containing the x64-windows vcpkg dependencies")
   # static GLEW (libglew32.lib, /MD CRT) -- avoids the dynamic import-lib symbol mismatch; matches
   # the proven 32-bit static-GLEW setup.
-  set(WMV_VCPKG_X64_STATIC "C:/Users/Rasmus Lund/vcpkg/installed/x64-windows-static-md")
+  set(WMV_VCPKG_X64_STATIC "C:/Users/Rasmus Lund/vcpkg/installed/x64-windows-static-md"
+      CACHE PATH "Directory containing the x64-windows-static-md vcpkg dependencies")
 endif()
 
 # Qt5
