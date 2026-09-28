@@ -37,6 +37,8 @@ esta tabla describe la organización acordada, no garantiza que las referencias 
 | `fix/equipment-remove-buttons` | Corrección de la retirada individual de equipo. Publicada en el fork e integrada en `my-develop`. |
 | `codex/animation-list-improvements` | Ordenación del listado de animaciones por nombre, ID y duración. Publicada en el fork e integrada en `my-develop`. |
 | `codex/fbx-animation-id-range` | Selección y búsqueda de animaciones para exportar a FBX mediante IDs de WoW. Publicada en el fork e integrada en `my-develop`. |
+| `codex/npc-equipment-1` | Visualización de armas en NPC exclusivos en Unity. Parte de `origin/develop`, publicada en el fork; PR #64. |
+| `codex/npc-equipment-2` | Exportación FBX del equipo de NPC. Parte de `codex/npc-equipment-1` y contiene ambos arreglos; publicada en el fork; PR #65. |
 
 Para una contribución independiente, partir de `develop` actualizado y trabajar en una rama
 específica del arreglo o funcionalidad. El PR debe comparar esa rama del fork contra `develop`
@@ -72,14 +74,15 @@ Se crearon estas contribuciones al proyecto oficial:
 - Equipo individual: https://github.com/wowmodelviewer/wowmodelviewer/pull/61
 - Ordenación de animaciones: https://github.com/wowmodelviewer/wowmodelviewer/pull/62
 - Selección de animaciones FBX: https://github.com/wowmodelviewer/wowmodelviewer/pull/63
+- Equipo de NPC, parte 1 (Unity): https://github.com/wowmodelviewer/wowmodelviewer/pull/64
+- Equipo de NPC, parte 2 (FBX): https://github.com/wowmodelviewer/wowmodelviewer/pull/65
 
 La creación de estos PR no significa que estén aceptados; consultar su estado cuando sea relevante.
 
 ### Cambios guardados en `my-develop` el 28 de septiembre
 
-No confundir trabajo implementado e instalado con trabajo publicado en un PR. Estos cambios
-ya tienen commits propios en `my-develop`; la separación de los dos arreglos de NPC en ramas
-de contribución está en curso:
+Estos cambios tienen commits propios en `my-develop`. Los arreglos de NPC también se aislaron
+mediante cherry-pick sobre la base oficial, sin arrastrar los cambios personales ni los PR #62/#63:
 
 - Seleccionar inicialmente el perfil de cliente más reciente (`7f5384f5`) disponible en el diálogo de
   versiones (`ClientChoiceDialog.cpp`); actualmente corresponde a Midnight.
@@ -96,13 +99,22 @@ de contribución está en curso:
   Restaura IDs, apariencias y ranuras vacías sin aplicar personalización racial al cuerpo.
   Los personajes raciales mantienen su `.chr` completo. Documentación y pruebas repetibles:
   `docs/fbx-npc-equipment.md` y `scripts/tests/fbx-equipment/`. Es un arreglo independiente
-  del visor Unity. Ambos se publicarán de forma acumulativa: `codex/npc-equipment-1`
-  desde `origin/develop` y `codex/npc-equipment-2` desde la primera, aplicando únicamente
-  sus commits y las dependencias mínimas necesarias; los dos PR apuntarán a `develop`.
+  del visor Unity. Ambos se publicaron de forma acumulativa: `codex/npc-equipment-1`
+  desde `origin/develop` y `codex/npc-equipment-2` desde la primera. Los commits aislados
+  son `13080587` y `981dea37`; el segundo añade únicamente el helper `WoWItem::isEquipped()`
+  como dependencia mínima de #61. Los dos PR tienen como destino `develop`; revisar e integrar
+  primero la parte 1 y después la parte 2, que inicialmente incluye ambos commits.
+  Tras integrar #64, actualizar la base de la segunda rama y verificar que su diff solo conserva FBX.
   Compilado e instalado el 28 de septiembre: seis casos de exportación y cuatro casos
   de rechazo aprobados. Tyrande exporta cuerpo, arco y 156 clips; se verificaron hueso,
   textura y movimiento numéricamente, sin revisión visual del FBX en Unity. Los FBX
   originales de Song of War no se sobrescribieron.
+
+Verificación de las ramas aisladas el 28 de septiembre: ambas compilaron en Release x64.
+La parte 1 pasó una nueva secuencia de ocho pasos con Tyrande (ambas manos, retirada y recarga).
+La parte 2 pasó de nuevo seis exportaciones y cuatro rechazos de instantáneas inválidas.
+Evidencia local: `C:\Users\mauri\WMVDev\fbx-npc-pr\`. La instalación diaria conserva el ejecutable
+ya verificado; las pruebas de aislamiento utilizaron el runtime del worktree separado.
 
 Caso verificado del arreglo de NPC: `creature/tyrande3/tyrande3.m2` (FileDataID `4198151`),
 con `Kaldorei Moon Bow` (ItemID `213160`) en la mano izquierda; modelo del arco `524474`.
