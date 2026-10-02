@@ -54,6 +54,26 @@ mezclarlos con otra tarea. Para commits, seguir el skill personal `mau-commit` d
 
 ## Trabajo realizado
 
+### Animaciones: variantes, alias y archivos — 2 de octubre de 2026
+
+Arreglo revisado e integrado en `my-develop`: identidad por secuencia/variante,
+resolución coherente de alias, tiempos y buffers, cierre de archivos propios sin
+alterar consumidores compartidos, y muestreo FBX de la secuencia seleccionada.
+La contribución independiente está en `codex/animation-source-resolution`, basada
+en `origin/develop` (`7b518d3b`), commit `259de366`, PR
+https://github.com/wowmodelviewer/wowmodelviewer/pull/69. Incluye la corrección mínima
+de selección de clips también presente en #63; no depende del resto de su interfaz.
+
+Compilación Release x64 e instalación local verificadas. La rama independiente
+también compiló y pasó las regresiones: 14 clips de HumanMale, 284.472 muestras
+comparadas con un lector y muestreador independientes, y 15 selecciones ocultas del
+visor sin bloqueos. Evidencia local: `C:/Users/mauri/WMVDev/animation-source-fix-20261002/pr/`.
+El FBX original de Song of War se conserva. La exportación validada contiene
+esqueleto y animaciones; la exportación con malla/materiales falla en PixelBuffer
+también con los binarios previos. La revisión visual de las poses sigue pendiente.
+Se deben reconstruir juntos los componentes C++ porque cambia el tamaño de `GameFile`.
+Unity y el protocolo no cambian por este arreglo.
+
 ### Integrado en `my-develop`
 
 - **Retirada individual de equipo** (`a908c92c`): habilitar los botones de eliminación por
