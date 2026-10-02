@@ -183,6 +183,25 @@ Format loosely based on [Keep a Changelog](https://keepachangelog.com/).
   follow aliases yet.)
 
 ### Changed
+- **Character > Import Armory Character: pick the region, realm and name instead of pasting a link.** The
+  dialog asks for a region (Europe, Americas & Oceania, Korea, Taiwan -- the regions the importer serves),
+  a realm and a character name, and imports with Enter or the bold Import character button; pasting an
+  Armory link stays available underneath and reads every link shape it did before. The fields become the
+  character link the importer already understands, so both go through the same request. The realm comes
+  from the region's realm list when the Armory proxy serves one (typing completes from the list); otherwise
+  it is typed, and a realm's name is turned into its slug the way the game's own slugs are made ("Mal'Ganis"
+  -> malganis), with the result shown under the field. Looking up, imported and failed are all shown in the
+  dialog, which stays open: the success line names the character, race, class, realm and region from the
+  answer itself, and failures say what was wrong (no such character, realm not accepted, proxy unreachable,
+  a search page instead of a character page) without a message box. Import is disabled while fields are
+  empty or a request runs, and the request cannot be started twice. The last region and realm that
+  imported, and the last eight characters, are remembered in Config.ini ([Armory]); realm lists are cached
+  for a week in userSettings/ArmoryRealms.json. An -armory import that fails now logs why and exits instead
+  of waiting on a message box.
+- **Armory proxy: a realm list route, and realms with accented slugs.** `?region=<r>&realms=1` returns the
+  region's realm list from Blizzard's realm index (cached for a day), and the realm check accepts accented
+  slugs such as `pozzo-delleternità` and `festung-der-stürme`, which it used to refuse -- characters on
+  those realms could not be imported at all. Both need the proxy redeployed (armory-proxy/README.md).
 - **Model > Appearance: "Customization" is now "Character Appearance", under the Mount card.** The "Mount /
   dismount" button at the bottom of the page is gone: the Mount card replaces it. Character > Mount /
   Dismount stays.
@@ -275,6 +294,55 @@ Format loosely based on [Keep a Changelog](https://keepachangelog.com/).
   `-imgseq` smoke test is gone. `-unityipctest` and `-fbxexport` still run.
 
 ### Fixed
+- **Glowing eye colours glow in the Unity viewport.** A character's eye pass is a Mod_Add material (pixel
+  shader 8): the iris, plus a second texture added on top of the lit colour. That second unit reads, through the
+  mesh's second UV set, a small glow cell at the bottom of the eye image. On 97 of the client's 272 eye textures --
+  every blood elf, night elf, void elf and vulpera colour, and orc clan eyes such as `claneyes00_01` -- the cell
+  holds a glow sprite; on the rest it is black. The renderer had the addition implemented but held it back for
+  every Mod_Add material, so a glowing eye drew as a flat orange iris with a dark pupil. It is now drawn wherever
+  that second unit is the character eye (M2 texture type 19). On a Mag'har Orc with `claneyes00_01`, in a
+  full-body view next to the game's own render of the same character, the eye's brightest pixels go from
+  (234, 187, 36) to (254, 254, 68) against the game's (255, 255, 53), and its peak luminance from 188 to 241
+  against 241. On an eye colour whose cell is black nothing changes, to the pixel, and changing the eye colour
+  moves the glow with it without a reload. The other Mod_Add batches -- about 1,140 on creatures, spells, items and world models -- are left as
+  they were on purpose until they have references of their own: `-wmvModAddLobe=off|eyes|all` overrides the scope
+  at run time, and `off` draws exactly what the renderer drew before.
+- **Armory character import reads the links the Armory hands out today, and says why an import failed instead of
+  importing nothing.** The Armory moved character pages to `/<locale>/worldsoul/<region>/armory/character/<realm>/<name>`
+  and put a search page at `/<locale>/worldsoul/<region>/armory?q=<name>`. The importer pulled the realm and name out
+  of a link by counting characters and slashes, so a search link -- the one a browser is showing while you look for
+  the character -- was read as realm "eu", character "armory", and a character page with a trailing slash was read as
+  having no name at all. Worse, the failure was silent: the profile API answers an unknown character with a 404 whose
+  body is JSON (`{"code":404,...}`), the importer only asked whether the body parsed as JSON, and so imported a
+  character with no race, no customizations and no equipment -- the model on screen simply never changed. Links are
+  now read as URLs (scheme, host, path segments, query), which handles the current form, the 2023
+  `/character/<region>/<realm>/<name>` form, the older `/character/<realm>/<name>` form whose region comes from the
+  locale (including `pt-br` and `es-mx`, which are US), classic realms, a trailing slash, a query string, a link
+  pasted without `https://`, and names with accents. The HTTP status and the payload are both checked, so an error
+  can never be dressed onto the model, and each failure names itself: a search link explains where to find the
+  character's own link, a 404 names the character, realm and region and mentions hidden profiles, 401/403 points at
+  the proxy's access key, 429 says to wait, and an unreachable proxy reports the network error. The log records the
+  request URL, the HTTP status, the response size and the reason.
+- **Races that share a character model with another race are no longer missing from the race table.** It was
+  keyed by the model's FileDataID, so the second race on a model file was silently dropped -- and with it went
+  Mag'har Orc (on the Orc model), both faction Pandaren, and ten more: 46 of 58 races survived, 75 of 103
+  race-and-sex rows. Nothing could resolve those races to a model, so a Mag'har Orc could not be loaded at
+  all, and the Browse "Characters" tree never listed them. The table is now keyed by race and sex, keeping
+  the HD model where a race has several; a second table, keyed by model file as before, still answers "which
+  race is this model", so loading a model by file id resolves exactly as it did.
+- **Picking a race in Browse > Characters loads that race, not the race that shares its model.** The race
+  browser's rows name a race and a sex, but the pick carried only the model file, so Mag'har Orc loaded an
+  Orc -- with Orc customization options in Model > Appearance. Each row now carries its race and sex through
+  to the model load, and picking a different race on the model already loaded (Orc to Mag'har Orc) switches
+  it in place instead of being ignored as "the same model".
+- **An Armory import of a race that shares its model now imports that race's appearance, not the other
+  race's.** A character model is read as the first race on its file, and the customization options come from
+  that race's ChrModel -- so importing a Mag'har Orc applied 0 of her 9 customizations, leaving a default Orc
+  wearing her gear. The import now tells the model which race it is (`WoWModel::setRaceSex`) and rebuilds the
+  options before applying the appearance: the same import applies 9 of 9. An import of a race with no model
+  at all still stops with a message naming the race, instead of dressing whatever was on screen -- it used to
+  apply the character's customizations and equipment to the model already in the viewport, or do nothing
+  whatsoever when the viewport was empty.
 - **Choosing, swapping or taking off a mount no longer makes the animation jump or start over in the Unity
   viewport.** A mount choice holds the UI thread while the mount's model loads (1.5-1.9 s, measured) and starts the
   mount and the character's riding animation in that wait. The first tick after it counted the whole wait into

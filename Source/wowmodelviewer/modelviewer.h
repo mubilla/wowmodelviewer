@@ -28,12 +28,14 @@
 #include "glm/glm.hpp"
 
 #include <QString>
+#include <QVariantMap>
 
 class SettingsControl;
 class ModelInspector;
 class wxAuiToolBar;
 class ExportJobManager;
 class UnityRendererHost;
+class CharInfos;
 
 namespace core { class GameConfig; }
 
@@ -141,7 +143,9 @@ public:
   bool LoadFbxEquipment(QString fn);
   bool PrepareFbxAsset(wxString & args, wxString & label, wxString & tempCharPath);
 
-  void LoadModel(GameFile * f);
+  // raceID/sexID name the race the model should be read as, for the races that share a model
+  // file with another race (Mag'har Orc on the Orc model); -1 leaves the model to resolve it.
+  void LoadModel(GameFile * f, int raceID = -1, int sexID = -1);
   void LoadItem(unsigned int displayID);
   // The component-geoset state an item's own model should be shown with. See the definition.
   void applyItemComponentGeosets(unsigned int itemId);
@@ -412,7 +416,20 @@ public:
   
   void UpdateControls();
    
-  void ImportArmoury(wxString strURL);
+  // An Armory character import in two steps, so the import dialog can show each outcome in
+  // place. FetchArmoryCharacter asks the importer plugin for the character behind a link and
+  // checks that this build has a model for its race; nothing on screen changes, and a failure
+  // comes back as a message (with no character). summary, when given, receives what the
+  // importer read beyond CharInfos (server-spelled name, realm, race and class names), or
+  // stays empty when the plugin cannot say. ApplyArmoryCharacter loads the race's model and
+  // dresses it. ImportArmoury runs both for -armory, and only logs a failure: there is
+  // nobody to click a message box away in a headless run.
+  CharInfos * FetchArmoryCharacter(const wxString & strURL, wxString & error, QVariantMap * summary = nullptr);
+  bool ApplyArmoryCharacter(CharInfos & info, wxString & error);
+  bool ImportArmoury(wxString strURL);
+  // A region's realm list as the importer plugin's proxy serves it (see ArmoryImporter::realmList);
+  // { ok, unsupported, message, realms }, or ok false when no Armory importer is loaded.
+  QVariantMap ArmoryRealmList(const QString & region);
   void ModelInfo();
 
   void OnGameToggle(wxCommandEvent &event);
