@@ -54,6 +54,22 @@ mezclarlos con otra tarea. Para commits, seguir el skill personal `mau-commit` d
 
 ## Trabajo realizado
 
+### Conjuntos y alternativas de transmog � 3 de octubre de 2026
+
+El filtro por armadura est� publicado en `codex/item-set-armor-filters`, commit
+`32215a2f`, PR https://github.com/wowmodelviewer/wowmodelviewer/pull/73.
+La ampliaci�n con `TransmogSet` y panel de alternativas por ItemID/apariencia est�
+implementada **sin commit ni push** en ese worktree y aplicada al �rbol de trabajo
+local de `my-develop` para su compilaci�n diaria; se preservaron los cambios previos.
+No interpretar esta aplicaci�n local como un merge o publicaci�n del PR actualizado.
+Ambas compilaciones Release x64 pasaron y la instalaci�n local se actualiz� con 13
+archivos verificados por hash. Pruebas ocultas: 5.838 selecciones de conjuntos,
+18.697 cambios de objeto, 1.196 de apariencia, regresiones del selector individual
+y base sin transmog. Esquema 14: se reconstruir� la cach� al cargar el juego.
+La revisi�n visual y de assets renderizados sigue pendiente. Criterios, l�mites y
+pruebas en `docs/item-set-filters.md`; evidencia local en
+`C:/Users/mauri/WMVDev/item-set-filters/`. No se abri� la aplicaci�n tras instalar.
+
 ### Animaciones: variantes, alias y archivos — 2 de octubre de 2026
 
 Arreglo revisado e integrado en `my-develop`: identidad por secuencia/variante,
@@ -187,3 +203,43 @@ del repositorio oficial ni versionar los assets extraídos del juego.
 
 Actualizar este documento cuando cambien acuerdos, ramas o hitos importantes, evitando que
 los apartados históricos se interpreten como el estado actual del árbol de trabajo.
+
+### Agrupaciones parciales de transmogs � 4 de octubre de 2026
+
+La ampliaci�n pendiente de Item Sets ahora usa `TransmogSetGroupID` y `ClassMask`
+para omitir �nicamente fragmentos sin grupo que est�n cubiertos por fuentes exactas
+de variantes completas de una misma familia/grupo. Astral Chain pasa de 21 registros
+a 6 variantes completas; se conservan piezas exclusivas y datos incompletos.
+Esquema 15: reconstrucci�n de cach� al siguiente inicio. Ambas compilaciones Release
+pasaron, se verific� la extracci�n de los campos desde DB2 y se actualizaron 11
+archivos de la instalaci�n local con verificaci�n de hash. Los cambios siguen sin
+commit ni push en el worktree del PR #73 y en el checkout diario. Ver criterios y
+pruebas en `docs/item-set-filters.md`.
+
+### Publicación de conjuntos transmog — 4 de octubre de 2026
+
+La ampliación y la corrección de fragmentos se publicaron en
+`codex/transmog-item-sets`, commit `c534546f`, PR
+https://github.com/wowmodelviewer/wowmodelviewer/pull/74 contra `develop`.
+El PR #73 sigue abierto: #74 depende de él e incluye temporalmente su commit
+`32215a2f`. El worktree aislado usa ahora la nueva rama, está limpio y sigue
+`fork/codex/transmog-item-sets`; la rama del #73 se conserva sin cambios.
+Las copias locales de estos cambios en `my-develop` continúan pendientes, sin merge
+ni commit en esa rama. Esta publicación reemplaza las referencias anteriores a
+«sin commit ni push» únicamente para la contribución aislada. La instalación local
+ya contiene la versión verificada con esquema 15. Mauricio confirmó las alternativas
+de Sabellian y aprobó la UI; el conflicto visual de pecho/piernas de Southsea Cruise
+continúa pendiente, como documenta el PR.
+### Fragmentos con nombres distintos — 4 de octubre de 2026
+
+Corrección local posterior al PR #74: la cobertura de fuentes exactas ya no exige
+el mismo nombre localizado. Resuelve Draconic Plate frente a Verdant Plate y
+Dread Vestment frente a Dread Plate. Conserva las restricciones de grupo y ClassMask.
+Ambas compilaciones pasaron, 242.436 comprobaciones ocultas y 194 regresiones;
+ejecutable diario instalado y verificado por hash. Pendiente la revisión visual
+de estas familias. Cambio aplicado en ambos checkouts, todavía sin commit ni push.
+
+La corrección de nombres distintos quedó publicada en el PR #74 mediante el commit
+`a684813d` de `codex/transmog-item-sets`. Rama aislada limpia y sincronizada;
+descripción del PR actualizada con la regla general y las pruebas finales.
+Las copias de trabajo en `my-develop` se conservan pendientes.
