@@ -243,3 +243,25 @@ La corrección de nombres distintos quedó publicada en el PR #74 mediante el co
 `a684813d` de `codex/transmog-item-sets`. Rama aislada limpia y sincronizada;
 descripción del PR actualizada con la regla general y las pruebas finales.
 Las copias de trabajo en `my-develop` se conservan pendientes.
+
+### Settings y búsqueda de equipo por ID — 10 de octubre de 2026
+
+Los cambios previos de conjuntos transmog del checkout diario quedaron guardados
+por petición de Mauricio en `e2f6b978` de `my-develop`. Esto reemplaza las referencias
+históricas a copias pendientes en esa rama.
+
+La corrección de Settings (tamaño inicial, redimensionado y desplazamiento), búsqueda
+por ItemID independiente de su visualización y objetos sin nombre quedó publicada
+en `codex/settings-item-id`, commit `0df7dc58`, PR
+https://github.com/wowmodelviewer/wowmodelviewer/pull/90 contra `develop`.
+Parte de `origin/develop` actualizado (`d3643c06`) y no depende de los PR de transmog.
+El worktree aislado compiló en Release x64 con wxWidgets 3.3.3 y pasó las pruebas
+ocultas. La integración en `my-develop` conserva la misma corrección verificada e
+instalada, adaptada a su esquema `Item.SheathType`; el PR usa `Item.SheatheType`.
+
+El bastón 153575/185141 cargó el modelo 1717765, se equipó y se exportó para
+verificación. Se actualizó la instalación diaria: solo cambió `wowmodelviewer.exe`
+y se verificaron los hashes de los siete binarios C++. Copia previa y evidencia en
+`C:/Users/mauri/WMVDev/settings-item-id-20261010/`. No se abrió WMV automáticamente.
+Mauricio probó la instalación y confirmó que funcionó bien. Ver pruebas y límites
+en `docs/settings-item-id.md`; otros DPI y animación del bastón no están cubiertos.
