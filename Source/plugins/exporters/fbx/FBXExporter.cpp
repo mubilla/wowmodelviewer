@@ -51,6 +51,7 @@
 #include "FBXHeaders.h"
 #include "ModelRenderPass.h"
 #include "WoWModel.h"
+#include "Attachment.h"
 #include "RenderTexture.h"
 #include "video.h"
 
@@ -109,6 +110,10 @@ std::wstring FBXExporter::fileSaveFilter() const
 
 bool FBXExporter::exportModel(Model * model, std::wstring target)
 {
+  if (!m_equipmentRequest.empty())
+    return exportEquipmentPackage(dynamic_cast<WoWModel *>(model), target);
+  if (m_exportAllCustomizations)
+    return exportCustomizationPackage(dynamic_cast<WoWModel *>(model), target);
   reset();
   m_lastError.clear();
 
@@ -176,7 +181,7 @@ bool FBXExporter::exportModel(Model * model, std::wstring target)
   // when clips will actually be written (this is what makes the takes land in the file).
   ios->SetBoolProp(EXP_FBX_MATERIAL, wantMesh);
   ios->SetBoolProp(EXP_FBX_TEXTURE, wantMesh);
-  ios->SetBoolProp(EXP_FBX_EMBEDDED, wantMesh);
+  ios->SetBoolProp(EXP_FBX_EMBEDDED, wantMesh && m_equipmentTextureRoot.isEmpty());
   ios->SetBoolProp(EXP_FBX_SHAPE, true);
   ios->SetBoolProp(EXP_FBX_GOBO, true);
   ios->SetBoolProp(EXP_FBX_ANIMATION, wantAnimation);
@@ -248,6 +253,10 @@ bool FBXExporter::exportModel(Model * model, std::wstring target)
     return false;
   }
 
+  if (m_packageScene && !describeCustomizationGeometry())
+    return false;
+  if (!m_equipmentTextureRoot.isEmpty() && !shareEquipmentTextures())
+    return false;
   wmvProgress("STAGE WRITE");
   if(!exporter->Export(m_p_scene))
   {
@@ -312,7 +321,11 @@ void FBXExporter::createMeshes()
         FbxNode* itemMeshNode = FBXHeaders::createMesh(m_p_manager, m_p_scene, itemModel, glm::mat4(1.0f), glm::vec3(0.0f), m_exportComponentRaw);
         m_attachMeshNodes[It->first] = itemMeshNode;
 
-        const int l = m_p_model->attLookup[It->first];
+        int attachmentId = It->first;
+        if (m_packageScene && m_p_model->attachment)
+          for (const auto * child : m_p_model->attachment->children)
+            if (child->model() == itemModel && child->slot == (*it)->slot()) attachmentId = child->id;
+        const int l = m_p_model->attLookup[attachmentId];
         bool attached = false;
         if (l > -1 && l < (int)m_p_model->atts.size())
         {
@@ -813,7 +826,16 @@ std::vector<FBXUnitMeta> FBXExporter::exportRawUnits(WoWModel * model, ModelRend
       continue;
     }
 
-    const QString fname = QString::fromStdString(baseName) + QString("_unit%1.png").arg(u);
+    QString fname;
+    if (m_packageScene)
+      for (const auto & texture : m_texturesToExport)
+        if (texture.second == glid)
+        {
+          const QString path = QString::fromStdWString(texture.first);
+          fname = path.mid(qMax(path.lastIndexOf('\\'), path.lastIndexOf('/')) + 1);
+          break;
+        }
+    if (fname.isEmpty()) fname = QString::fromStdString(baseName) + QString("_unit%1.png").arg(u);
     m_texturesToExport[(dirPrefix + fname).toStdWString()] = glid; // RAW: no tint/additive transform
     um.file = fname.toStdString();
     units.push_back(um);
@@ -1067,7 +1089,7 @@ void FBXExporter::createMaterials()
       }
 
       QString tex_fullpath_filename = QString::fromStdWString(m_filename);
-      tex_fullpath_filename = tex_fullpath_filename.left(tex_fullpath_filename.lastIndexOf('\\') + 1) + tex_name;
+      tex_fullpath_filename = tex_fullpath_filename.left(qMax(tex_fullpath_filename.lastIndexOf('\\'), tex_fullpath_filename.lastIndexOf('/')) + 1) + tex_name;
 
       if (baked)
         m_bakedTextures[tex_fullpath_filename.toStdWString()] = { std::move(bakedPixelsBGRA), bakedW, bakedH };
@@ -1080,6 +1102,7 @@ void FBXExporter::createMaterials()
 
       FbxFileTexture* texture = FbxFileTexture::Create(m_p_manager, tex_name.toStdString().c_str());
       texture->SetFileName(tex_fullpath_filename.toStdString().c_str());
+      if (m_packageScene) texture->SetRelativeFileName(tex_name.toStdString().c_str());
       texture->SetTextureUse(FbxTexture::eStandard);
       texture->SetMappingType(FbxTexture::eUV);
       texture->SetMaterialUse(FbxFileTexture::eModelMaterial);
@@ -1220,6 +1243,8 @@ void FBXExporter::createMaterials()
             // (Blender's 63-char material name limit).
             FbxString mtrl_name = QString(model->name()).section('/', -1).section('\\', -1)
                                     .toStdString().c_str();
+            if (m_packageScene)
+              mtrl_name = QString("equipment_%1_%2").arg((int)(*it)->slot()).arg((int)It->first).toUtf8().constData();
             mtrl_name.Append("_", 1);
             char tmp[32];
             _itoa((int)i, tmp, 10);
@@ -1280,7 +1305,7 @@ void FBXExporter::createMaterials()
             }
 
             QString tex_fullpath_filename = QString::fromStdWString(m_filename);
-            tex_fullpath_filename = tex_fullpath_filename.left(tex_fullpath_filename.lastIndexOf('\\') + 1) + tex_name;
+            tex_fullpath_filename = tex_fullpath_filename.left(qMax(tex_fullpath_filename.lastIndexOf('\\'), tex_fullpath_filename.lastIndexOf('/')) + 1) + tex_name;
 
             if (baked)
               m_bakedTextures[tex_fullpath_filename.toStdWString()] = { std::move(bakedPixelsBGRA), bakedW, bakedH };
@@ -1293,6 +1318,7 @@ void FBXExporter::createMaterials()
 
             FbxFileTexture* texture = FbxFileTexture::Create(m_p_manager, tex_name.toStdString().c_str());
             texture->SetFileName(tex_fullpath_filename.toStdString().c_str());
+            if (m_packageScene) texture->SetRelativeFileName(tex_name.toStdString().c_str());
             texture->SetTextureUse(FbxTexture::eStandard);
             texture->SetMappingType(FbxTexture::eUV);
             texture->SetMaterialUse(FbxFileTexture::eModelMaterial);
@@ -1411,6 +1437,11 @@ void FBXExporter::reset()
   m_filename = L"";
 
   m_boneNodes.clear();
+  m_attachMeshNodes.clear();
+  m_attachSkeletonNode.clear();
+  m_attachBoneNodes.clear();
+  m_attachBoneClusters.clear();
+  m_packageGeometry = QJsonArray();
   m_texturesToExport.clear();
   m_textureTints.clear();
   m_bakedTextures.clear();
