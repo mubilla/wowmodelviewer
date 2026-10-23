@@ -504,3 +504,112 @@ Respaldo de instalación: `C:/Users/mauri/WMVDev/rebuild-my-develop-20261022/pre
 Manifiesto: `C:/Users/mauri/WMVDev/rebuild-my-develop-20261022/install-manifest.csv`.
 Los dos objetos temporales se conservaron fuera del checkout en `local-only/`;
 las tareas locales permanecen sin versionar y no forman parte de los PR.
+
+### Corrección de animaciones Upright y sets del orco — 22 de octubre de 2026
+
+Corrección directa en `my-develop`, sin Spec, commit, push ni actualización de los
+PR existentes. El cargador C++ y el parser del visor Unity integrado descartaban
+SKS1/SKB1/AFID del esqueleto Upright 1969462 al encontrar su padre 1964411. Ahora
+las secuencias propias tienen prioridad por AnimationID/SubAnimationID, con sus
+alias, tiempos, interpolación y relojes globales; las restantes se heredan. Cada
+cuerpo conserva sus pivotes y su esqueleto. Los esqueletos parciales con otro
+espacio de índices conservan el tratamiento anterior. La opción condicional de
+Appearance sigue sin cambiar el modelo en la UI; las pruebas cargaron los modelos
+reales 917116 y 1968587. No confundir ese toggle con una vista previa de Upright.
+
+El exportador `wmv-fbx-posture-2` conserva personalización v2 y sus rutas. El
+equipo añade `bodyVariants` a la entrada Orc male de los índices v1, con geometría,
+esqueleto y reglas combinadas resueltos por postura. El consumidor debe elegir
+modelo tanto en piezas como en reglas; no se elimina la validación. No se modificó
+WowCharacterViewer. Los cambios nuevos todavía no están en las ramas de PR #128/#129.
+
+Retail `wow` 12.1.5.70391: 151 clips por cuerpo, 3.133.460 muestras FBX comparadas
+con lector independiente sin discrepancias; Upright usa 73 clips propios y 78
+heredados dentro del rango seleccionado. Pasaron las 18 asociaciones cara/postura,
+199.320 comparaciones de pistas del parser Unity y la regresión Night Elf femenina.
+Oathclaw Wargarb y Battlelords Plate: 30 variantes de piezas, ambas reglas por set,
+18 evaluaciones de geometría Stand/Walk/Run y 11.928 vínculos/adjuntos con diferencia
+de bind 0. Se revisaron renders nativos FBX y capturas de seis recorridos ocultos
+de WMV, todos aprobados. No hubo captura visual del cliente Blizzard ni ejecución
+de WowCharacterViewer. Las láminas FBX usan materiales neutros; no prueban un nuevo
+consumidor completo de texturas o correcciones faciales.
+
+Compilaciones Release x64 y Unity 6000.3.25f1 aprobadas. Instalación diaria
+actualizada con 9 archivos reemplazados y 176 hashes verificados, sin abrirla en
+el escritorio. Respaldo y manifiesto: `C:/Users/mauri/WMVDev/upright-20261022/install/`.
+Paquetes compartidos actualizados exclusivamente en `WowBattlegrounds/LocalAssets`:
+102 archivos cambiados, 2.081 `.meta` preservados y comprobados contra el respaldo,
+3.675 archivos existentes restantes sin cambios. Se conservaron las otras razas,
+preferencias y apariencias predeterminadas. Los originales están archivados en
+`LocalAssets/Prepared/WoWModelViewer/upright-20261022/original-packages.zip`, sin
+duplicar GUIDs como archivos importables. Recursos de prueba y evidencia visual
+permanecen en ese mismo directorio local compartido; logs y métricas en
+`C:/Users/mauri/WMVDev/upright-20261022/`. Contrato y alcance de validación en
+`docs/orc-upright-export.md`. No añadir estos assets a Git.
+
+
+### Actualización de los PR de posturas y equipo — 23 de octubre de 2026
+
+Mauricio confirmó que la corrección instalada funciona y autorizó actualizar ambos PR.
+El #128 (`codex/fbx-orc-postures`) quedó publicado en `8ae5f9b7`, con el arreglo
+funcional `8e7d0423`: conserva las animaciones nativas de Upright en C++ y Unity.
+El #129 (`codex/standalone-equipment-export`) quedó publicado en `3ab50d28`, con el
+arreglo de equipo `1b185d0c`. Contiene la rama publicada del #128 como antecesora;
+ya no es independiente. Integrar primero #128 y después #129. Ambos siguen abiertos,
+con títulos, descripciones, contrato del consumidor y pruebas actualizados.
+
+Ambas ramas aisladas compilaron Release x64. El #128 repitió la exportación completa:
+151 clips por postura, 3.133.460 muestras sin discrepancias y 18 combinaciones faciales
+correctas; también pasaron las regresiones sintéticas y 199.320 comparaciones del
+lector integrado. El #129 reexportó y reimportó ambos sets (14 y 16 variantes), y
+pasaron de nuevo 18 casos de poses, 11.928 uniones y 89.412 puntos evaluados, con
+error máximo de matrices 0. Las capturas visuales previas y la confirmación de Mauricio
+se distinguen de estas nuevas comprobaciones automáticas. No se afirma captura del
+cliente Blizzard ni prueba dentro de WowCharacterViewer.
+
+Evidencia nueva: `C:/Users/mauri/WMVDev/upright-pr-update-20261023/`.
+Los recursos de esta comprobación permanecen en `LocalAssets/Prepared/WoWModelViewer/
+upright-20261022/pr128` y `pr129`. No se publicaron recursos de WoW, archivos `.meta`,
+tareas ni ajustes locales de compilación. Los dos worktrees de PR quedaron limpios
+y sincronizados con el fork. Las copias pendientes de `my-develop` se conservan;
+esta actualización de PR no es un commit ni una integración nueva en esa rama.
+
+### Efectos M2 sin malla — 23 de octubre de 2026
+
+Corregido en `my-develop`, sin commit ni push. El visor Unity rechazaba
+`spells/cfx_mage_fireball_missile.m2` (1327009) por no tener vértices, aunque
+contiene cuatro emisores de partículas. Ahora admite efectos con emisores y skin
+vacío, conserva esqueleto/reloj y calcula el encuadre desde una simulación breve
+que reinicia antes de reproducir. Los modelos realmente vacíos siguen rechazados.
+
+Compilación Unity correcta; 1.078 comprobaciones internas aprobadas, incluidas
+28 nuevas para partículas/cintas sin superficie. Las pruebas IPC de Fireball,
+Precast Hands y Arcane Missiles pasaron, con pausa, selección de animación,
+cambio a una criatura y recarga. Capturas confirmaron que Fireball se dibuja;
+no se comparó su apariencia con el cliente Blizzard. La primera ejecución conjunta
+superó el tiempo de inicio del arnés al ejecutar todas las pruebas internas;
+estas terminaron sin fallos y la ejecución IPC separada de Fireball pasó.
+El alcance es el visor: no añade exportación FBX de partículas.
+
+Instalación diaria actualizada: cuatro archivos reemplazados y 164 hashes SHA-256
+verificados. Se cerró normalmente WMV y no se volvió a abrir. Respaldo, manifiesto
+y logs: `C:/Users/mauri/WMVDev/fireball-effects-20261023/`. Recursos y capturas:
+`C:/Users/mauri/workspace/WowBattlegrounds/LocalAssets/Prepared/WoWModelViewer/fireball-effects-20261023/`.
+Se conservaron los demás cambios pendientes del checkout.
+
+### PR de efectos sin malla — 23 de octubre de 2026
+
+La corrección de Fireball quedó publicada de forma independiente en
+`codex/emitter-only-effects`, commit `a2b60303`, PR
+https://github.com/wowmodelviewer/wowmodelviewer/pull/130 contra `develop` oficial
+(`678071f0`). Incluye únicamente el visor, sus regresiones y documentación; no
+incluye Flight, exportación FBX, assets del juego ni cambios de orcos/equipo.
+
+El player Unity de esa rama aislada compiló con 6000.3.25f1 y pasó las 1.078
+comprobaciones internas. Las pruebas IPC ocultas con ese player y el host local
+existente pasaron para Fireball, Precast Hands y Arcane Missiles. Se inspeccionó
+una captura nueva de Fireball; no se afirma fidelidad visual al cliente Blizzard.
+Evidencia: `C:/Users/mauri/WMVDev/fireball-effects-20261023/pr-validation/`.
+El worktree `C:/Users/mauri/.codex/worktrees/emitter-only-effects/WowModelViewer`
+quedó limpio y sincronizado con el fork. La instalación diaria conserva la versión
+integrada ya verificada; las copias de trabajo en `my-develop` siguen pendientes.

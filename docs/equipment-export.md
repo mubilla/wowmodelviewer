@@ -114,6 +114,31 @@ of every class/form-specific body or every possible item combination. Mirrored
 equipment, absent assets, unresolved textures and invalid attachments fail the
 export explicitly rather than publishing an incomplete successful package.
 
+### Orc posture variants (exporter `wmv-fbx-posture-2`)
+
+Selecting Orc male now exports both authored posture models when the client
+declares them. Hunched retains `race-2/male/catalog.json`; Upright uses
+`race-2/male/postures/choice-439/catalog.json`. Combined set rules follow the
+same suffix beneath `rules/`. Each variant loads the actual body model, applies
+the posture selection, resolves the items again, and exports its geometry,
+reference hierarchy, pivots, attachment transforms and binding metadata.
+The model ID is never relabelled on another body's geometry.
+
+The version-1 equipment index retains one `variants` entry per race/sex and
+its existing base `catalog`. An additive `bodyVariants` array on that entry
+lists `{option, choice, modelFileId, catalog}` for both bodies. These paths are
+relative to the index containing `variants`, just like its base `catalog`.
+Variant catalogs also record `option`, `choice`, `exporter`, `build` and
+`product`. Character customization version 2 is unchanged.
+
+Consumers supporting Upright must select the `bodyVariants` entry whose
+`modelFileId` matches the active character, for **every piece and the combined
+set rules**. The legacy base path continues to mean Hunched. Consumers without
+this additive support can keep using Hunched, but must retain their model
+compatibility rejection for Upright. Do not fall back to the first race/sex
+entry or mix a body's pieces with another body's rules. No consumer project is
+modified by this exporter correction.
+
 ## Process and failure behavior
 
 The export uses the existing separate-process FBX worker and a captured character
