@@ -1,5 +1,59 @@
 # WoW Model Viewer — contexto del fork e instrucciones de trabajo
 
+### Publicación de eventos nativos — 23 de octubre de 2026
+
+Publicados en `codex/native-animation-events`, commit `3533c814`, PR
+https://github.com/wowmodelviewer/wowmodelviewer/pull/131 contra `develop` oficial.
+Depende del PR #128 y parte de su head `8ae5f9b7`; el diff incluye temporalmente
+esa dependencia. Integrar #128 primero. No incluye equipo independiente ni efectos.
+El worktree aislado está limpio y sincronizado con el fork. Compilación Release x64,
+28 comprobaciones sintéticas y los 13 informes del corpus aprobados. Exportación
+oculta nueva de ambas posturas (tres takes por postura), FBX ordinario (un take),
+lector independiente y reimportación correctos; también retirada de sidecar
+obsoleto y rechazo de escritura fallida. Evidencia `native-events-20261023/pr-*`
+en `C:/Users/mauri/WMVDev/`. Sin nueva revisión visual ni cambios del consumidor.
+La instalación diaria conserva la versión verificada tras la revisión. El commit
+del 24 de octubre guarda también los eventos nativos y su documentación local en
+`my-develop`, por petición de Mauricio; no fusiona otras ramas.
+
+### Eventos nativos de animación — 23 de octubre de 2026
+
+Implementado en `my-develop` y guardado en el commit del 24 de octubre. Toda exportación FBX animada
+incluye automáticamente `<archivo>.fbx.wmvevents.json` (`wmv.animation-events`,
+versión 1). Cada catálogo de cuerpo/personalización, incluidas ambas posturas
+del orco, referencia su propio sidecar. Conserva todos los códigos, payloads,
+huesos, posiciones, timestamps y relojes globales; diferencia eventos ausentes
+de errores de lectura. Sin cambios de UI ni modificaciones de WowSpellViewer.
+
+PEDC contiene sus timestamps residentes incluso para clips con huesos externos;
+MD21 puede requerir AFM2 para eventos externos. No confundirlos con AFSB.
+PABC, alias, índices locales y límites se validan; herencia más profunda que el
+padre inmediato se rechaza explícitamente. Alcance real: Retail `wow`
+12.1.5.70391, layout 274. Globales y blacklist tienen cobertura sintética;
+no se afirma soporte comprobado de Classic/TBC u otros builds.
+
+Compilación Release x64 y 24 comprobaciones sintéticas aprobadas. Lector
+independiente: 13 cuerpos, 1.965 clips, 3.802 timestamps. Paquete completo del
+orco: 151 takes por postura, 403/331 timestamps y 28/35 clips sin eventos.
+Además, 13 FBX normales con 103 takes. Reimportación comprobó takes, duraciones
+y referencias a sidecars; regresión ósea: 3.133.460 muestras sin discrepancias.
+La inspección de geometría, huesos, pesos y materiales coincide con los paquetes
+previos; los defaults de apariencia son los de la nueva selección. Pasaron la
+retirada de sidecar obsoleto al exportar sin animaciones y el rechazo de escritura
+fallida. El host oculto puede devolver 255 con estado `OK`: comprobar el archivo
+de estado y las verificaciones, no sólo el código del proceso.
+
+Instalación diaria actualizada: dos archivos reemplazados y siete hashes
+SHA-256 verificados, con respaldo/manifiesto en
+`C:/Users/mauri/WMVDev/native-events-20261023/install/`. Se cerró WMV normalmente
+y no se volvió a abrir. No hubo revisión visual ni entrada simulada. Los nuevos
+recursos de prueba están separados en
+`WowBattlegrounds/LocalAssets/Prepared/WoWModelViewer/native-events-20261023/`;
+no se sobrescribieron paquetes compartidos anteriores. Evidencia en
+`C:/Users/mauri/WMVDev/native-events-20261023/`. Contrato del consumidor y límites
+en `docs/native-animation-events.md`; pruebas en
+`scripts/tests/native-animation-events/`.
+
 ## Objetivo
 
 Este proyecto es el fork personal de Mauricio (`mubilla`) de WoW Model Viewer.
